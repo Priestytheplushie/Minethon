@@ -1,0 +1,26 @@
+# Cython generated C/C++ files
+*.c
+*.cpp
+
+# Cython debug symbols & annotation reports
+cython_debug/
+*.html
+
+# Compiled C extensions
+*.so
+*.pyd
+*.dll
+*.dylib
+
+# Build & packaging directories
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Standard Python cache & environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
