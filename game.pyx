@@ -1,6 +1,7 @@
 import pygame
 from block import Block
 import random
+from player import Player
 
 WIDTH = 800
 HEIGHT = 600
@@ -43,6 +44,10 @@ def generate_world():
 
 world = generate_world()
 
+player = Player(WIDTH // 2, HEIGHT // 2)
+all_sprites = pygame.sprite.Group(player)
+
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -54,5 +59,10 @@ while True:
     for block in world:
         block.update(screen)
 
+    all_sprites.update(screen)
+
+    all_sprites.draw(screen)
     pygame.display.flip()
     clock.tick(60)
+
+pygame.quit()
