@@ -1,11 +1,14 @@
 import pygame
 from block import Block
 from player import Player
+from utils import load_texture
 from noise import Noise1D, Noise2D, perlin1d, perlin2d, brownian
 from random import getrandbits
 
 WIDTH = 800
 HEIGHT = 600
+WORLD_COLUMNS = (WIDTH // 16) * 10
+WORLD_WIDTH = WORLD_COLUMNS * 16
 
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -13,21 +16,18 @@ pygame.display.set_caption("Minethon")
 clock = pygame.time.Clock()
 cdef unsigned seed = getrandbits(32)
 
-def load_texture(path):
-    image = pygame.image.load(path).convert_alpha()
-    return pygame.transform.scale(image, (16,16))
-
-grass_tex = load_texture("assets/grass_block_side.png")
-dirt_tex = load_texture("assets/dirt.png")
-stone_tex = load_texture("assets/stone.png")
+grass_tex = load_texture("assets/grass_block_side.png",16,16)
+dirt_tex = load_texture("assets/dirt.png",16,16)
+stone_tex = load_texture("assets/stone.png",16,16)
 
 def generate_world():
     depth = abs(brownian(Noise1D(lambda h, x: perlin1d(h, x)), 0.7, 0.5, 10).scale(0.0625)*10) + HEIGHT / 32
     noise = brownian(Noise2D(lambda h, x, y: perlin2d(h, x, y)), 0.7, 0.5, 10).scale(0.5)*0.25 + Noise2D(lambda h, x, y: y - depth(h, x))*2**(-3)
 
     blocks = []
-    cols = WIDTH // 16
-    rows = HEIGHT // 16
+    cols = WORLD_COLUMNS
+    rows = HEIGHT // 16 + 1
+    surface_y = rows // 2
 
     for row in range(rows+1):
         blocks.append([])
@@ -75,8 +75,19 @@ def generate_world():
 
 world = generate_world()
 
-player = Player(WIDTH // 2, HEIGHT // 2)
+spawn_column = (WORLD_WIDTH // 2 // 16) * 16
+blocks_in_spawn_column = [
+    block for block in world
+    if block.rect.left == spawn_column
+]
+spawn_block = min(
+    blocks_in_spawn_column,
+    key=lambda block: block.rect.top,
+)
+player = Player(spawn_block.rect.centerx, 0)
+player.rect.midbottom = (spawn_block.rect.centerx, spawn_block.rect.top)
 all_sprites = pygame.sprite.Group(player)
+block_group = pygame.sprite.Group(*world)
 
 
 while True:
@@ -87,12 +98,18 @@ while True:
 
     screen.fill((135, 206, 235))
 
+    all_sprites.update(screen, block_group, WORLD_WIDTH)
+    camera_x = max(
+        0,
+        min(player.rect.centerx - WIDTH // 2, WORLD_WIDTH - WIDTH),
+    )
+
     for block in world:
-        block.update(screen)
+        if block.rect.right > camera_x and block.rect.left < camera_x + WIDTH:
+            block.update(screen, camera_x)
 
-    all_sprites.update(screen)
-
-    all_sprites.draw(screen)
+    screen.blit(player.image, (player.rect.x - camera_x, player.rect.y))
+    player.draw_hearts(screen)
     pygame.display.flip()
     clock.tick(60)
 

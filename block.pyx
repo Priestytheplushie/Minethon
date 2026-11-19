@@ -1,7 +1,8 @@
 import pygame
 
-class Block: 
+class Block(pygame.sprite.Sprite): 
     def __init__(self, texture, x, y):
+        super().__init__()
         self.texture = texture
         self.rect = pygame.Rect(x, y, 16, 16)
 
@@ -13,5 +14,5 @@ class Block:
         else:
             raise AttributeError(f"'Block' object has no attribute '{name}'")
     
-    def update(self, screen):
-        screen.blit(self.texture, self.rect) 
+    def update(self, screen, camera_x=0):
+        screen.blit(self.texture, (self.rect.x - camera_x, self.rect.y))
