@@ -1,12 +1,11 @@
 import pygame
 pygame.init()
-from utils import WIDTH, HEIGHT, WORLD_COLUMNS, WORLD_WIDTH, WORLD_ROWS, State, state, font, seed_from_text
+from utils import WIDTH, HEIGHT, WORLD_COLUMNS, WORLD_WIDTH, WORLD_ROWS, State, state, font, seed_from_text, MUSIC_END, play_random_track
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Minethon")
 clock = pygame.time.Clock()
 pygame.mixer.music.set_endevent(MUSIC_END)
 play_random_track(State.TITLE)
-cdef unsigned seed = 0
 
 from items import ItemType, BlockType, Item, item_assets, block_assets, item_placed, block_drop, get_item_asset, is_solid_block
 from player import Player

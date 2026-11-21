@@ -92,7 +92,6 @@ def seed_from_text(text):
         return int(text, 10) & 0xFFFFFFFF
     except ValueError:
         return int.from_bytes(hashlib.sha256(text.encode("utf-8")).digest()[:4], "big")
-<<<<<<< HEAD
 
 def play_random_track(state):
     global current_track
@@ -114,5 +113,3 @@ def play_random_track(state):
         loops=0, fade_ms=1000
     )
     current_track = next_track
-=======
->>>>>>> 3af7e09 (switched to 2d array of block ids, much more efficient)
