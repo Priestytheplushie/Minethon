@@ -15,7 +15,7 @@ MUSIC_END = pygame.USEREVENT + 1
 cpdef enum State:
     TITLE
     PLAY
-    GENERATE_WORLD 
+    GENERATE_WORLD
     CONFIGURATION
     DEAD
 
@@ -82,7 +82,7 @@ current_track = None
 
 state = State.TITLE
 
-def load_texture(path, int width=18, int height=18):
+def load_texture(path, int width=16, int height=16):
     image = pygame.image.load(path).convert_alpha()
     return pygame.transform.scale(image, (width, height))
 
@@ -91,6 +91,7 @@ def seed_from_text(text):
         return int(text, 10) & 0xFFFFFFFF
     except ValueError:
         return int.from_bytes(hashlib.sha256(text.encode("utf-8")).digest()[:4], "big")
+<<<<<<< HEAD
 
 def play_random_track(state):
     global current_track
@@ -112,3 +113,5 @@ def play_random_track(state):
         loops=0, fade_ms=1000
     )
     current_track = next_track
+=======
+>>>>>>> 3af7e09 (switched to 2d array of block ids, much more efficient)

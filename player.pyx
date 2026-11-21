@@ -1,5 +1,6 @@
 import pygame
 from utils import load_texture
+from items import is_solid_block
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -65,11 +66,11 @@ class Player(pygame.sprite.Sprite):
             world_width = screen.get_width()
         self.rect.right = min(world_width, self.rect.right)
 
-        horizontal_hits = pygame.sprite.spritecollide(self, blocks, False)
+        horizontal_hits = self.collide(blocks)
         if dx > 0 and horizontal_hits:
-            self.rect.right = min(block.rect.left for block in horizontal_hits)
+            self.rect.right = min(x for (x, y) in horizontal_hits)
         elif dx < 0 and horizontal_hits:
-            self.rect.left = max(block.rect.right for block in horizontal_hits)
+            self.rect.left = max(x+16 for (x, y) in horizontal_hits)
 
         if (
             self.on_ground
@@ -82,13 +83,23 @@ class Player(pygame.sprite.Sprite):
             self.velocity_y + self.gravity, self.max_fall_speed
         )
         self.rect.y += round(self.velocity_y)
-        vertical_hits = pygame.sprite.spritecollide(self, blocks, False)
+        vertical_hits = self.collide(blocks)
         self.on_ground = False
 
         if vertical_hits and self.velocity_y > 0:
-            self.rect.bottom = min(block.rect.top for block in vertical_hits)
+            self.rect.bottom = min(y for (x, y) in vertical_hits)
             self.on_ground = True
             self.velocity_y = 0
         elif vertical_hits and self.velocity_y < 0:
-            self.rect.top = max(block.rect.bottom for block in vertical_hits)
+            self.rect.top = max(y+16 for (x, y) in vertical_hits)
             self.velocity_y = 0
+
+    def collide(self, blocks):
+        hits = []
+        for i in range(int(self.rect.centerx // 16) - 1, int(self.rect.centerx // 16) + 2):
+            for j in range(int(self.rect.centery // 16) - 2, int(self.rect.centery // 16) + 3):
+                if is_solid_block.get(blocks[j][i], False):
+                    box = pygame.Rect(i*16, j*16, 16, 16)
+                    if box.colliderect(self.rect):
+                        hits.append((i*16, j*16))
+        return hits
