@@ -1,6 +1,6 @@
 import pygame
 pygame.init()
-from utils import WIDTH, HEIGHT, WORLD_COLUMNS, WORLD_WIDTH, State, state, font, seed_from_text
+from utils import WIDTH, HEIGHT, WORLD_COLUMNS, WORLD_WIDTH, WORLD_ROWS, State, state, font, seed_from_text
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Minethon")
 clock = pygame.time.Clock()
@@ -24,10 +24,10 @@ def generate_world():
 
     blocks = []
     cols = WORLD_COLUMNS
-    rows = HEIGHT // 16 + 1
+    rows = WORLD_ROWS
     surface_y = rows // 2
 
-    for row in range(rows+1):
+    for row in range(rows):
         blocks.append([])
         for col in range(cols):
             val = noise(seed, col, row)
@@ -100,7 +100,7 @@ while True:
                 else:
                     seed = getrandbits(32)
                 world = generate_world()
-                spawn_column = WORLD_WIDTH // 2 // 16
+                spawn_column = WORLD_COLUMNS // 2
                 blocks_in_spawn_column = list(map(lambda row: row[spawn_column], world))
                 spawn_block = 0
                 while not is_solid_block.get(blocks_in_spawn_column[spawn_block], False):
@@ -137,8 +137,8 @@ while True:
             )
 
             for i in range(camera_x // 16 - 1, (camera_x + WIDTH) // 16 + 1):
-                for j in range(0, HEIGHT // 16 + 1):
-                    block = world[j][i]
+                for j in range(0, WORLD_ROWS):
+                    block = world[j][i%WORLD_COLUMNS]
                     img = block_assets.get(block, None)
                     if img == None: continue
                     screen.blit(img, (i * 16 - camera_x, j * 16))

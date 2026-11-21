@@ -1,5 +1,5 @@
 import pygame
-from utils import load_texture
+from utils import load_texture, WORLD_COLUMNS, WORLD_ROWS
 from items import is_solid_block
 
 class Player(pygame.sprite.Sprite):
@@ -98,7 +98,7 @@ class Player(pygame.sprite.Sprite):
         hits = []
         for i in range(int(self.rect.centerx // 16) - 1, int(self.rect.centerx // 16) + 2):
             for j in range(int(self.rect.centery // 16) - 2, int(self.rect.centery // 16) + 3):
-                if is_solid_block.get(blocks[j][i], False):
+                if is_solid_block.get(blocks[j%WORLD_ROWS][i%WORLD_COLUMNS], False):
                     box = pygame.Rect(i*16, j*16, 16, 16)
                     if box.colliderect(self.rect):
                         hits.append((i*16, j*16))
