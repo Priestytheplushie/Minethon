@@ -4,7 +4,7 @@ from player import Player
 from utils import load_texture
 from noise import Noise1D, Noise2D, perlin1d, perlin2d, brownian
 from random import choice, getrandbits
-from utils import WIDTH, HEIGHT, WORLD_COLUMNS, WORLD_WIDTH, State, state, font, seed_from_text
+from utils import WIDTH, HEIGHT, WORLD_COLUMNS, WORLD_WIDTH, State, state, font, seed_from_text, current_track, MUSIC_END, STATE_PLAYLIST, play_random_track
 from widgets import Button, TextInput
 from splashes import SPLASH_TEXT
 
@@ -12,6 +12,9 @@ pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Minethon")
 clock = pygame.time.Clock()
+
+pygame.mixer.music.set_endevent(MUSIC_END)
+play_random_track(State.TITLE)
 
 cdef unsigned seed = 0
 
@@ -108,6 +111,8 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
+        elif event.type == MUSIC_END:
+            play_random_track(state)
         if state == State.TITLE:
             seed_input.handle_event(event)
             if create_world_button.is_clicked(event):
@@ -134,7 +139,7 @@ while True:
                 all_sprites = pygame.sprite.Group(player)
                 block_group = pygame.sprite.Group(*world)
                 state = State.PLAY
-
+                play_random_track(state)
     if state == State.TITLE:
         scroll_x = (scroll_x - scroll_speed * dt) % pano_width
 

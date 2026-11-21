@@ -24,3 +24,6 @@ __pycache__/
 *$py.class
 .venv/
 venv/
+
+#SFX
+assets/sfx
