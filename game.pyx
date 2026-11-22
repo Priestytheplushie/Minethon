@@ -11,33 +11,90 @@ from items import ItemType, BlockType, Item, item_assets, block_assets, item_pla
 from player import Player
 from utils import load_texture
 from noise import Noise1D, Noise2D, perlin1d, perlin2d, brownian
-from random import choice, getrandbits
+from random import choice, getrandbits, random, seed as set_random_seed
 from widgets import Button, TextInput
 from splashes import SPLASH_TEXT
 
+BLOCK_NAMES = {
+    BlockType.DIRT: "Dirt",
+    BlockType.COBBLESTONE: "Cobblestone",
+    BlockType.OAK_LOG: "Oak Log",
+    BlockType.OAK_LEAVES: "Oak Leaves",
+    BlockType.STONE: "Stone",
+}
+
 cdef unsigned seed = 0
 
+def plant_tree(blocks, int col, int ground_row):
+    cdef int trunk_height = 5
+    cdef int trunk_top = ground_row - trunk_height
+    cdef int leaf_row, leaf_col, dx, r
+    blocks[ground_row][col] = BlockType.DIRT
+    for r in range(trunk_top + 1, trunk_top + 3):
+        for dx in range(-2, 3):
+            leaf_col = col + dx
+            if blocks[r][leaf_col] == BlockType.AIR:
+                if abs(dx) == 2 and (r == trunk_top + 1 and random() < 0.5):
+                    continue
+                blocks[r][leaf_col] = BlockType.OAK_LEAVES
+    for dx in range(-1, 2):
+        leaf_col = col + dx
+        if blocks[trunk_top][leaf_col] == BlockType.AIR:
+            blocks[trunk_top][leaf_col] = BlockType.OAK_LEAVES
+    for dx in range(-1, 2):
+        leaf_col = col + dx
+        if abs(dx) == 0 or random() < 0.5:
+            if blocks[trunk_top - 1][leaf_col] == BlockType.AIR:
+                blocks[trunk_top - 1][leaf_col] = BlockType.OAK_LEAVES
+    for r in range(trunk_top, ground_row):
+        blocks[r][col] = BlockType.OAK_LOG
+
 def generate_world():
+    set_random_seed(seed)
     depth = abs(brownian(Noise1D(lambda h, x: perlin1d(h, x)), 0.7, 0.5, 10).scale(0.0625)*10) + HEIGHT / 32
     noise = brownian(Noise2D(lambda h, x, y: perlin2d(h, x, y)), 0.7, 0.5, 10).scale(0.5)*0.25 + Noise2D(lambda h, x, y: y - depth(h, x))*2**(-3)
-
     blocks = []
     cols = WORLD_COLUMNS
     rows = WORLD_ROWS
-    surface_y = rows // 2
-
     for row in range(rows):
         blocks.append([])
         for col in range(cols):
             val = noise(seed, col, row)
-            x = col*16
-            y = row*16
-
-            if val < -0.5: blocks[row].append(BlockType.AIR)
+            if val < -0.5:
+                blocks[row].append(BlockType.AIR)
             elif val < 0.0:
-                if row == 0 or blocks[row-1][col] == BlockType.AIR: blocks[row].append(BlockType.GRASS)
-                else: blocks[row].append(BlockType.DIRT)
-            else: blocks[row].append(BlockType.STONE)
+                if row == 0 or blocks[row-1][col] == BlockType.AIR:
+                    blocks[row].append(BlockType.GRASS)
+                else:
+                    blocks[row].append(BlockType.DIRT)
+            else:
+                blocks[row].append(BlockType.STONE)
+    cdef int last_tree_col = -999
+    cdef int ground_row, r
+    cdef bint has_clearance
+
+    for col in range(2, cols - 2):
+        if col - last_tree_col < 8:
+            continue
+        ground_row = -1
+        for r in range(rows):
+            if blocks[r][col] != BlockType.AIR:
+                ground_row = r
+                break
+        if ground_row == -1 or blocks[ground_row][col] != BlockType.GRASS:
+            continue
+        if ground_row < 7:
+            continue
+        has_clearance = True
+        for r in range(ground_row - 6, ground_row):
+            if blocks[r][col] != BlockType.AIR:
+                has_clearance = False
+                break
+        if not has_clearance:
+            continue
+        if random() < 0.10:
+            plant_tree(blocks, col, ground_row)
+            last_tree_col = col
     return blocks
 
 # Menu Assets
@@ -78,6 +135,7 @@ for i, face in enumerate(faces):
     panorama.blit(face, (i * HEIGHT, 0))
 scroll_x = 0
 scroll_speed = 60
+camera_x = 0
 
 minethon_version_label = font.render("Minethon 0.1.0-alpha",False,(255, 255, 255))
 minethon_version_shadow = font.render("Minethon 0.1.0-alpha", False, (56, 56, 56))
@@ -109,6 +167,38 @@ while True:
                 all_sprites = pygame.sprite.Group(player)
                 state = State.PLAY
                 play_random_track(state)
+        if state == State.PLAY:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    player.selected_block = BlockType.DIRT
+                elif event.key == pygame.K_2:
+                    player.selected_block = BlockType.COBBLESTONE
+                elif event.key == pygame.K_3:
+                    player.selected_block = BlockType.OAK_LOG
+                elif event.key == pygame.K_4:
+                    player.selected_block = BlockType.OAK_LEAVES
+                elif event.key == pygame.K_5:
+                    player.selected_block = BlockType.STONE
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_x, mouse_y = event.pos
+                target_col = (mouse_x + camera_x) // 16
+                target_row = mouse_y // 16
+                if 0 <= target_col < WORLD_COLUMNS and 0 <= target_row < WORLD_ROWS:
+                    block_center_x = target_col * 16 + 8
+                    block_center_y = target_row * 16 + 8
+                    dist_sq = (player.rect.centerx - block_center_x) ** 2 + (player.rect.centery - block_center_y) ** 2
+                    if dist_sq <= 6400:
+                        # Left Click
+                        if event.button == 1:
+                            if world[target_row][target_col] != BlockType.AIR:
+                                world[target_row][target_col] = BlockType.AIR
+                        # Right Click
+                        elif event.button == 3:
+                            if world[target_row][target_col] == BlockType.AIR:
+                                block_rect = pygame.Rect(target_col * 16, target_row * 16, 16, 16)
+                                if not player.rect.colliderect(block_rect):
+                                    world[target_row][target_col] = player.selected_block
+
 
     match state:
         case State.TITLE:
@@ -134,16 +224,31 @@ while True:
                 0,
                 min(player.rect.centerx - WIDTH // 2, WORLD_WIDTH - WIDTH),
             )
-
             for i in range(camera_x // 16 - 1, (camera_x + WIDTH) // 16 + 1):
                 for j in range(0, WORLD_ROWS):
-                    block = world[j][i%WORLD_COLUMNS]
+                    block = world[j][i % WORLD_COLUMNS]
                     img = block_assets.get(block, None)
-                    if img == None: continue
+                    if img is None: continue
                     screen.blit(img, (i * 16 - camera_x, j * 16))
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            hover_col = (mouse_x + camera_x) // 16
+            hover_row = mouse_y // 16
 
+            if 0 <= hover_col < WORLD_COLUMNS and 0 <= hover_row < WORLD_ROWS:
+                block_center_x = hover_col * 16 + 8
+                block_center_y = hover_row * 16 + 8
+                dist_sq = (player.rect.centerx - block_center_x) ** 2 + (player.rect.centery - block_center_y) ** 2
+                if dist_sq <= 6400:
+                    highlight_rect = pygame.Rect(hover_col * 16 - camera_x, hover_row * 16, 16, 16)
+                    pygame.draw.rect(screen, (0, 0, 0), highlight_rect, 1)
             screen.blit(player.image, (player.rect.x - camera_x, player.rect.y))
             player.draw_hearts(screen)
+            held_name = BLOCK_NAMES.get(player.selected_block, "Unknown")
+            hud_text = font.render(f"Hand: {held_name} (Keys 1-5)", False, (255, 255, 255))
+            hud_shadow = font.render(f"Hand: {held_name} (Keys 1-5)", False, (56, 56, 56))
+            screen.blit(hud_shadow, (WIDTH - hud_text.get_width() - 8, 12))
+            screen.blit(hud_text, (WIDTH - hud_text.get_width() - 10, 10))
+
             pygame.display.flip()
         case _:
             break
