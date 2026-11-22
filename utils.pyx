@@ -9,13 +9,14 @@ WIDTH = 800
 HEIGHT = 600
 WORLD_COLUMNS = (WIDTH // 16) * 10
 WORLD_WIDTH = WORLD_COLUMNS * 16
+WORLD_ROWS = HEIGHT // 16 + 1
 
 MUSIC_END = pygame.USEREVENT + 1
 
 cpdef enum State:
     TITLE
     PLAY
-    GENERATE_WORLD 
+    GENERATE_WORLD
     CONFIGURATION
     DEAD
 
@@ -82,7 +83,7 @@ current_track = None
 
 state = State.TITLE
 
-def load_texture(path, int width=18, int height=18):
+def load_texture(path, int width=16, int height=16):
     image = pygame.image.load(path).convert_alpha()
     return pygame.transform.scale(image, (width, height))
 

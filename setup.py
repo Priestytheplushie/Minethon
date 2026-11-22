@@ -5,7 +5,7 @@ setup(
     ext_modules=cythonize(
         [
             "game.pyx",
-            "block.pyx",
+            "items.pyx",
             "player.pyx",
             "noise.pyx",
             "utils.pyx",
