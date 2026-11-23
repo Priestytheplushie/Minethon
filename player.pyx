@@ -7,7 +7,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.selected_block = BlockType.DIRT
-        self.image = load_texture("assets/steve.png", 18, 36)
+        self.image = load_texture("assets/steve.png", 15, 30)
         self.rect = self.image.get_rect(center=(x, y))
         self.speed = 1.8  
         self.gravity = 0.45
