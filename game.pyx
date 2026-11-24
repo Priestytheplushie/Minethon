@@ -21,6 +21,7 @@ BLOCK_NAMES = {
     BlockType.OAK_LOG: "Oak Log",
     BlockType.OAK_LEAVES: "Oak Leaves",
     BlockType.STONE: "Stone",
+    BlockType.GRASS: "Grass Block",
 }
 
 cdef unsigned seed = 0
@@ -179,6 +180,8 @@ while True:
                     player.selected_block = BlockType.OAK_LEAVES
                 elif event.key == pygame.K_5:
                     player.selected_block = BlockType.STONE
+                elif event.key == pygame.K_6:
+                    player.selected_block = BlockType.GRASS
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = event.pos
                 target_col = (mouse_x + camera_x) // 16
@@ -244,8 +247,8 @@ while True:
             screen.blit(player.image, (player.rect.x - camera_x, player.rect.y))
             player.draw_hearts(screen)
             held_name = BLOCK_NAMES.get(player.selected_block, "Unknown")
-            hud_text = font.render(f"Hand: {held_name} (Keys 1-5)", False, (255, 255, 255))
-            hud_shadow = font.render(f"Hand: {held_name} (Keys 1-5)", False, (56, 56, 56))
+            hud_text = font.render(f"Hand: {held_name} (Keys 1-6)", False, (255, 255, 255))
+            hud_shadow = font.render(f"Hand: {held_name} (Keys 1-6)", False, (56, 56, 56))
             screen.blit(hud_shadow, (WIDTH - hud_text.get_width() - 8, 12))
             screen.blit(hud_text, (WIDTH - hud_text.get_width() - 10, 10))
 
